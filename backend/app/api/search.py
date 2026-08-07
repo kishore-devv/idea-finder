@@ -18,3 +18,18 @@ def search_apps(q: str, limit: int = 20):
         keyword=q,
         limit=limit,
     )
+
+
+@router.get("/app/{app_id}")
+def get_app_details(app_id: str):
+
+    return service.get_details(app_id)
+
+
+@router.get("/app/{app_id}/reviews")
+def get_app_reviews(app_id: str, count: int = 100):
+
+    return service.get_reviews(
+        app_id=app_id,
+        count=count,
+    )
