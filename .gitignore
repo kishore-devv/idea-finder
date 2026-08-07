@@ -1,0 +1,23 @@
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+
+# Environment files
+.env
+.env.*
+frontend/.env*
+backend/.env*
+
+# Ignore accidental monorepo
+next-monorepo/
+
+# OS
+.DS_Store
+Thumbs.db
