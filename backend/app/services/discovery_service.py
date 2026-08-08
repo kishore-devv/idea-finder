@@ -1,56 +1,40 @@
 from app.providers.playstore_provider import PlayStoreProvider
 from app.database.database import SessionLocal
 from app.database.models import App, Review
+from app.providers.playstore_provider import PlayStoreProvider
 
 
 class DiscoveryService:
 
     def __init__(self):
-
         self.provider = PlayStoreProvider()
 
-    def search(self, keyword: str):
+    def search(self, keyword: str, limit: int = 20):
 
-        apps = self.provider.search_apps(keyword)
+        apps = self.provider.search_apps(
+            keyword,
+            limit=limit,
+        )
 
         db = SessionLocal()
 
         saved_apps = []
 
         try:
-
             for result in apps:
 
                 app_id = result["appId"]
 
                 print(f"Processing: {result['title']}")
 
-                # --------------------------------
-                # Get full app details
-                # --------------------------------
-
                 details = self.provider.get_app_details(app_id)
 
-                # --------------------------------
-                # Save app
-                # --------------------------------
-
-                existing_app = (
-                    db.query(App)
-                    .filter(App.app_id == app_id)
-                    .first()
-                )
+                existing_app = db.query(App).filter(App.app_id == app_id).first()
 
                 if existing_app:
-
                     db_app = existing_app
-
                 else:
-
-                    db_app = App(
-                        app_id=app_id,
-                    )
-
+                    db_app = App(app_id=app_id)
                     db.add(db_app)
 
                 db_app.title = details.get("title")
@@ -73,22 +57,12 @@ class DiscoveryService:
 
                 db.commit()
 
-                # --------------------------------
-                # Get reviews
-                # --------------------------------
-
                 app_reviews = self.provider.get_reviews(
                     app_id,
                     limit=100,
                 )
 
-                print(
-                    f"Found {len(app_reviews)} reviews"
-                )
-
-                # --------------------------------
-                # Save reviews
-                # --------------------------------
+                print(f"Found {len(app_reviews)} reviews")
 
                 for review in app_reviews:
 
@@ -98,11 +72,7 @@ class DiscoveryService:
                         continue
 
                     existing_review = (
-                        db.query(Review)
-                        .filter(
-                            Review.review_id == review_id
-                        )
-                        .first()
+                        db.query(Review).filter(Review.review_id == review_id).first()
                     )
 
                     if existing_review:
@@ -134,7 +104,6 @@ class DiscoveryService:
                 )
 
         finally:
-
             db.close()
 
         return saved_apps

@@ -1,19 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.services.discovery_service import DiscoveryService
 
-
-router = APIRouter(
-    prefix="/search",
-    tags=["Search"],
-)
+router = APIRouter(prefix="/search", tags=["Search"])
 
 service = DiscoveryService()
 
 
 @router.get("/")
-def search_apps(q: str, limit: int = 20):
-
+def search_apps(
+    q: str,
+    limit: int = Query(20, ge=1, le=100),
+):
     return service.search(
         keyword=q,
         limit=limit,
@@ -33,3 +31,12 @@ def get_app_reviews(app_id: str, count: int = 100):
         app_id=app_id,
         count=count,
     )
+
+
+# @router.get("/analysis/{app_id}")
+# def get_app_analysis(app_id: str, count: int = 100):
+
+#     return service.get_reviews(
+#         app_id=app_id,
+#         count=count,
+#     )
