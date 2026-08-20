@@ -6,6 +6,7 @@ from app.database import models
 
 from app.api.analysis import router as analysis_router
 
+from app.api.hidden_gems import router as hidden_gems_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -18,17 +19,14 @@ app = FastAPI(
 
 app.include_router(search_router)
 app.include_router(analysis_router)
+app.include_router(hidden_gems_router)
 
 
 @app.get("/")
 def root():
-    return {
-        "message": "Idea Finder API Running 🚀"
-    }
+    return {"message": "Idea Finder API Running 🚀"}
 
 
 @app.get("/health")
 def health():
-    return {
-        "status": "healthy"
-    }
+    return {"status": "healthy"}
