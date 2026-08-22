@@ -1,109 +1,163 @@
+from google_play_scraper.exceptions import NotFoundError
+
 from app.providers.playstore_provider import PlayStoreProvider
 from app.database.database import SessionLocal
 from app.database.models import App, Review
-from app.providers.playstore_provider import PlayStoreProvider
 
 
 class DiscoveryService:
 
     def __init__(self):
+
         self.provider = PlayStoreProvider()
 
     def search(self, keyword: str, limit: int = 20):
 
-        apps = self.provider.search_apps(
-            keyword,
-            limit=limit,
-        )
+        apps = self.provider.search_apps(keyword, limit=limit)
 
         db = SessionLocal()
 
         saved_apps = []
 
         try:
+
             for result in apps:
 
-                app_id = result["appId"]
+                app_id = result.get("appId")
 
-                print(f"Processing: {result['title']}")
+                if not app_id:
+                    print("Skipping result without app ID")
+                    continue
 
-                details = self.provider.get_app_details(app_id)
+                print(f"Processing: {result.get('title')}")
 
-                existing_app = db.query(App).filter(App.app_id == app_id).first()
+                try:
 
-                if existing_app:
-                    db_app = existing_app
-                else:
-                    db_app = App(app_id=app_id)
-                    db.add(db_app)
+                    # --------------------------------
+                    # Get full app details
+                    # --------------------------------
 
-                db_app.title = details.get("title")
-                db_app.developer = details.get("developer")
-                db_app.description = details.get("description")
-                db_app.category = details.get("genre")
-                db_app.score = details.get("score")
-                db_app.ratings = details.get("ratings")
-                db_app.reviews = details.get("reviews")
-                db_app.installs = details.get("installs")
-                db_app.real_installs = details.get("realInstalls")
-                db_app.price = details.get("price")
-                db_app.free = details.get("free")
-                db_app.offers_iap = details.get("offersIAP")
-                db_app.iap_price = details.get("inAppProductPrice")
-                db_app.released = details.get("released")
-                db_app.last_updated = details.get("lastUpdatedOn")
-                db_app.icon = details.get("icon")
-                db_app.url = details.get("url")
+                    details = self.provider.get_app_details(app_id)
 
-                db.commit()
+                    # --------------------------------
+                    # Save app
+                    # --------------------------------
 
-                app_reviews = self.provider.get_reviews(
-                    app_id,
-                    limit=100,
-                )
+                    existing_app = db.query(App).filter(App.app_id == app_id).first()
 
-                print(f"Found {len(app_reviews)} reviews")
+                    if existing_app:
 
-                for review in app_reviews:
+                        db_app = existing_app
 
-                    review_id = review.get("reviewId")
+                    else:
 
-                    if not review_id:
-                        continue
+                        db_app = App(app_id=app_id)
 
-                    existing_review = (
-                        db.query(Review).filter(Review.review_id == review_id).first()
+                        db.add(db_app)
+
+                    db_app.title = details.get("title")
+                    db_app.developer = details.get("developer")
+                    db_app.description = details.get("description")
+                    db_app.category = details.get("genre")
+                    db_app.score = details.get("score")
+                    db_app.ratings = details.get("ratings")
+                    db_app.reviews = details.get("reviews")
+                    db_app.installs = details.get("installs")
+                    db_app.real_installs = details.get("realInstalls")
+                    db_app.price = details.get("price")
+                    db_app.free = details.get("free")
+                    db_app.offers_iap = details.get("offersIAP")
+                    db_app.iap_price = details.get("inAppProductPrice")
+                    db_app.released = details.get("released")
+                    db_app.last_updated = details.get("lastUpdatedOn")
+                    db_app.icon = details.get("icon")
+                    db_app.url = details.get("url")
+
+                    db.commit()
+
+                    # --------------------------------
+                    # Get reviews
+                    # --------------------------------
+
+                    try:
+
+                        app_reviews = self.provider.get_reviews(app_id, limit=100)
+
+                        print(f"Found {len(app_reviews)} reviews")
+
+                    except Exception as error:
+
+                        print(f"Could not fetch reviews for " f"{app_id}: {error}")
+
+                        app_reviews = []
+
+                    # --------------------------------
+                    # Save reviews
+                    # --------------------------------
+
+                    for review in app_reviews:
+
+                        review_id = review.get("reviewId")
+
+                        if not review_id:
+                            continue
+
+                        existing_review = (
+                            db.query(Review)
+                            .filter(Review.review_id == review_id)
+                            .first()
+                        )
+
+                        if existing_review:
+                            continue
+
+                        db_review = Review(
+                            review_id=review_id,
+                            app_id=app_id,
+                            user=review.get("userName"),
+                            score=review.get("score"),
+                            text=review.get("content"),
+                            date=str(review.get("at")),
+                            thumbs_up=review.get("thumbsUpCount"),
+                            version=review.get("reviewCreatedVersion"),
+                        )
+
+                        db.add(db_review)
+
+                    db.commit()
+
+                    # --------------------------------
+                    # Add result
+                    # --------------------------------
+
+                    saved_apps.append(
+                        {
+                            "app_id": app_id,
+                            "title": details.get("title"),
+                            "score": details.get("score"),
+                            "installs": details.get("installs"),
+                            "reviews_scraped": len(app_reviews),
+                        }
                     )
 
-                    if existing_review:
-                        continue
+                except NotFoundError:
 
-                    db_review = Review(
-                        review_id=review_id,
-                        app_id=app_id,
-                        user=review.get("userName"),
-                        score=review.get("score"),
-                        text=review.get("content"),
-                        date=str(review.get("at")),
-                        thumbs_up=review.get("thumbsUpCount"),
-                        version=review.get("reviewCreatedVersion"),
-                    )
+                    print(f"Skipping app {app_id}: " f"App not found on Google Play")
 
-                    db.add(db_review)
+                    db.rollback()
 
-                db.commit()
+                    continue
 
-                saved_apps.append(
-                    {
-                        "app_id": app_id,
-                        "title": details.get("title"),
-                        "score": details.get("score"),
-                        "installs": details.get("installs"),
-                        "reviews_scraped": len(app_reviews),
-                    }
-                )
+                except Exception as error:
+
+                    print(f"Error processing {app_id}: {error}")
+
+                    db.rollback()
+
+                    continue
 
         finally:
+
             db.close()
 
         return saved_apps

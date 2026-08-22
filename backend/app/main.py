@@ -8,6 +8,10 @@ from app.api.analysis import router as analysis_router
 
 from app.api.hidden_gems import router as hidden_gems_router
 
+from app.api.market_analysis import router as market_analysis_router
+
+from app.api.discovery import router as discovery_router
+
 Base.metadata.create_all(bind=engine)
 
 
@@ -20,6 +24,8 @@ app = FastAPI(
 app.include_router(search_router)
 app.include_router(analysis_router)
 app.include_router(hidden_gems_router)
+app.include_router(market_analysis_router)
+app.include_router(discovery_router)
 
 
 @app.get("/")
