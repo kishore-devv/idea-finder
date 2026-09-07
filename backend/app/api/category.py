@@ -2,7 +2,10 @@ from fastapi import APIRouter
 
 from app.services.category_explorer_service import CategoryExplorerService
 
-router = APIRouter(prefix="/category", tags=["Category Explorer"])
+router = APIRouter(
+    prefix="/category",
+    tags=["Category Explorer"],
+)
 
 
 service = CategoryExplorerService()
@@ -11,12 +14,16 @@ service = CategoryExplorerService()
 @router.get("/apps")
 def explore_category(
     category: str,
+    keyword: str | None = None,
     min_rating: float | None = None,
     max_rating: float | None = None,
     min_ratings: int | None = None,
+    max_ratings: int | None = None,
     min_reviews: int | None = None,
+    max_reviews: int | None = None,
     min_installs: int | None = None,
     max_installs: int | None = None,
+    install_bucket: str | None = None,
     free: bool | None = None,
     contains_ads: bool | None = None,
     offers_iap: bool | None = None,
@@ -27,12 +34,16 @@ def explore_category(
 
     return service.explore(
         category=category,
+        keyword=keyword,
         min_rating=min_rating,
         max_rating=max_rating,
         min_ratings=min_ratings,
+        max_ratings=max_ratings,
         min_reviews=min_reviews,
+        max_reviews=max_reviews,
         min_installs=min_installs,
         max_installs=max_installs,
+        install_bucket=install_bucket,
         free=free,
         contains_ads=contains_ads,
         offers_iap=offers_iap,

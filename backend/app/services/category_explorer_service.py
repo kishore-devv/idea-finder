@@ -1,7 +1,6 @@
-from datetime import datetime, timedelta
-
 from app.database.database import SessionLocal
 from app.database.models import App
+from app.services.app_filter_service import AppFilterService
 
 
 class CategoryExplorerService:
@@ -9,12 +8,16 @@ class CategoryExplorerService:
     def explore(
         self,
         category: str,
+        keyword: str | None = None,
         min_rating: float | None = None,
         max_rating: float | None = None,
         min_ratings: int | None = None,
+        max_ratings: int | None = None,
         min_reviews: int | None = None,
+        max_reviews: int | None = None,
         min_installs: int | None = None,
         max_installs: int | None = None,
+        install_bucket: str | None = None,
         free: bool | None = None,
         contains_ads: bool | None = None,
         offers_iap: bool | None = None,
@@ -27,105 +30,32 @@ class CategoryExplorerService:
 
         try:
 
-            query = db.query(App).filter(App.category.ilike(f"%{category}%"))
+            apps = db.query(App).filter(App.category.ilike(f"%{category}%")).all()
 
-            # Rating
-            if min_rating is not None:
-                query = query.filter(App.score >= min_rating)
+            filters = {
+                "category": category,
+                "keyword": keyword,
+                "min_rating": min_rating,
+                "max_rating": max_rating,
+                "min_ratings": min_ratings,
+                "max_ratings": max_ratings,
+                "min_reviews": min_reviews,
+                "max_reviews": max_reviews,
+                "min_installs": min_installs,
+                "max_installs": max_installs,
+                "install_bucket": install_bucket,
+                "free": free,
+                "contains_ads": contains_ads,
+                "offers_iap": offers_iap,
+                "developer": developer,
+                "recently_updated_days": recently_updated_days,
+                "old_not_updated_days": old_not_updated_days,
+            }
 
-            if max_rating is not None:
-                query = query.filter(App.score <= max_rating)
-
-            # Number of ratings
-            if min_ratings is not None:
-                query = query.filter(App.ratings >= min_ratings)
-
-            # Number of reviews
-            if min_reviews is not None:
-                query = query.filter(App.reviews >= min_reviews)
-
-            # Free / Paid
-            if free is not None:
-                query = query.filter(App.free == free)
-
-            # Contains ads
-            if contains_ads is not None:
-                query = query.filter(App.contains_ads == contains_ads)
-
-            # In-app purchases
-            if offers_iap is not None:
-                query = query.filter(App.offers_iap == offers_iap)
-
-            # Developer
-            if developer:
-                query = query.filter(App.developer.ilike(f"%{developer}%"))
-
-            # Installs
-            if min_installs is not None:
-                query = query.filter(App.real_installs >= min_installs)
-
-            if max_installs is not None:
-                query = query.filter(App.real_installs <= max_installs)
-
-            apps = query.all()
-
-            # -------------------------------------------------
-            # Date filtering
-            # Only apply date logic when requested
-            # -------------------------------------------------
-
-            if recently_updated_days is not None or old_not_updated_days is not None:
-
-                now = datetime.utcnow()
-                filtered_apps = []
-
-                for app in apps:
-
-                    # If date filtering was requested but this
-                    # app has no update date, skip it.
-                    if not app.last_updated:
-                        continue
-
-                    updated_date = None
-
-                    try:
-                        updated_date = datetime.strptime(app.last_updated, "%Y-%m-%d")
-                    except ValueError:
-
-                        try:
-                            updated_date = datetime.fromisoformat(app.last_updated)
-                        except ValueError:
-                            pass
-
-                    if updated_date is None:
-                        continue
-
-                    # Recently updated
-                    if recently_updated_days is not None:
-
-                        cutoff = now - timedelta(days=recently_updated_days)
-
-                        if updated_date < cutoff:
-                            continue
-
-                    # Old / not updated
-                    if old_not_updated_days is not None:
-
-                        cutoff = now - timedelta(days=old_not_updated_days)
-
-                        if updated_date >= cutoff:
-                            continue
-
-                    filtered_apps.append(app)
-
-            else:
-                # No date filter requested.
-                # Keep all matching apps.
-                filtered_apps = apps
-
-            # -------------------------------------------------
-            # Response
-            # -------------------------------------------------
+            filtered_apps = AppFilterService.filter_apps(
+                apps,
+                **filters,
+            )
 
             return {
                 "category": category,
