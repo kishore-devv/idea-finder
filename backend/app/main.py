@@ -12,6 +12,14 @@ from app.api.market_analysis import router as market_analysis_router
 
 from app.api.discovery import router as discovery_router
 
+from app.api.category import router as category_router
+
+from app.api.analyzer import router as analyzer_router
+
+from app.api.category import router as category_router
+
+from app.api.category_discovery import router as category_discovery_router
+
 Base.metadata.create_all(bind=engine)
 
 
@@ -26,6 +34,10 @@ app.include_router(analysis_router)
 app.include_router(hidden_gems_router)
 app.include_router(market_analysis_router)
 app.include_router(discovery_router)
+app.include_router(category_router)
+app.include_router(analyzer_router)
+app.include_router(category_router)
+app.include_router(category_discovery_router)
 
 
 @app.get("/")

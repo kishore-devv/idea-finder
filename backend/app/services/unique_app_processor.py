@@ -82,6 +82,7 @@ class UniqueAppProcessor:
                     db_app.real_installs = details.get("realInstalls")
                     db_app.price = details.get("price")
                     db_app.free = details.get("free")
+                    db_app.contains_ads = details.get("containsAds", False)
                     db_app.offers_iap = details.get("offersIAP")
                     db_app.iap_price = details.get("inAppProductPrice")
                     db_app.released = details.get("released")

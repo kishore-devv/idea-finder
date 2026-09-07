@@ -17,7 +17,7 @@ class App(Base):
 
     description = Column(Text)
 
-    category = Column(String)
+    category = Column(String, index=True)
 
     score = Column(Float)
 
@@ -33,6 +33,8 @@ class App(Base):
 
     free = Column(Boolean)
 
+    contains_ads = Column(Boolean, default=False)
+
     offers_iap = Column(Boolean)
 
     iap_price = Column(String)
@@ -44,9 +46,6 @@ class App(Base):
     icon = Column(String)
 
     url = Column(String)
-
-
-
 
 
 class Review(Base):
