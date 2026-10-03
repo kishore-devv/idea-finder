@@ -1,226 +1,139 @@
-
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { discoverBatch } from "@/lib/api";
+import AppCard from "@/components/apps/AppCard";
+import { List, Loader2, Plus, X } from "lucide-react";
 
-type BatchApp = {
-  app_id?: string | null;
-  title?: string | null;
-  score?: number | null;
-  installs?: string | null;
-  reviews_scraped?: number | null;
-};
-
-type BatchResult = {
-  keyword: string;
-  discovered?: number;
-  duplicates?: number;
-  skipped?: number;
-  apps?: BatchApp[];
-};
-
-type BatchResponse = {
-  total_keywords: number;
-  results: BatchResult[];
-};
-
-export default function BatchDiscoveryPage() {
-  const [keywords, setKeywords] = useState("");
+export default function BatchSearchPage() {
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [limit, setLimit] = useState(20);
-
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [results, setResults] = useState<BatchResponse | null>(null);
+  const [results, setResults] = useState<Record<string, any[]>>({});
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-
-    const keywordList = keywords
-      .split("\n")
-      .map((keyword) => keyword.trim())
-      .filter(Boolean);
-
-    if (keywordList.length === 0) {
-      setError("Enter at least one keyword.");
-      return;
+  const addKeyword = () => {
+    if (keywordInput.trim() && !keywords.includes(keywordInput.trim())) {
+      setKeywords([...keywords, keywordInput.trim()]);
+      setKeywordInput("");
     }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addKeyword();
+    }
+  };
+
+  const removeKeyword = (kw: string) => {
+    setKeywords(keywords.filter(k => k !== kw));
+  };
+
+  const handleSearch = async () => {
+    if (keywords.length === 0) return;
 
     setLoading(true);
-    setError("");
-    setResults(null);
-
+    setError(null);
     try {
-      const response = await discoverBatch({
-        keywords: keywordList,
-        limit,
-      });
-
-      setResults(response);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while running batch discovery."
-      );
+      const data = await discoverBatch({ keywords, limit });
+      const batchData = data.results || data;
+      const parsedResults: Record<string, any[]> = {};
+      if (batchData.keyword_results) {
+        batchData.keyword_results.forEach((item: any) => {
+          parsedResults[item.keyword] = item.apps || [];
+        });
+      }
+      setResults(parsedResults);
+    } catch (err: any) {
+      setError(err.message || "Failed to search");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Batch Discovery</h1>
+    <div className="p-8 max-w-6xl mx-auto w-full">
+      <header className="mb-8">
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Batch Search</h1>
+        <p className="text-gray-500 mt-2">Search multiple keywords simultaneously.</p>
+      </header>
 
-        <p className="mt-2 text-gray-500">
-          Search multiple keywords in one discovery operation.
-        </p>
-      </div>
-
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-xl border bg-white p-6 shadow-sm"
-      >
-        <div className="grid gap-5 md:grid-cols-[1fr_140px]">
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Keywords
-            </label>
-
-            <textarea
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-              placeholder={`travel buddy
-budget planner
-habit tracker
-meal planner`}
-              rows={8}
-              className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
-            />
-
-            <p className="mt-2 text-sm text-gray-500">
-              Enter one keyword or search phrase per line.
-            </p>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Results per keyword
-            </label>
-
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={limit}
-              onChange={(e) => setLimit(Number(e.target.value))}
-              className="w-full rounded-lg border px-4 py-3"
-            />
-          </div>
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+        <div className="mb-4 flex flex-wrap gap-2">
+          {keywords.map(kw => (
+            <span key={kw} className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium border border-indigo-100">
+              {kw}
+              <button onClick={() => removeKeyword(kw)} className="text-indigo-400 hover:text-indigo-600 focus:outline-none">
+                <X className="w-4 h-4" />
+              </button>
+            </span>
+          ))}
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-6 rounded-lg px-6 py-3 font-semibold text-white disabled:opacity-50"
-        >
-          {loading ? "Discovering..." : "Run Batch Discovery"}
-        </button>
-      </form>
+        <div className="flex gap-4">
+          <div className="flex-1 relative">
+            <List className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Add keyword and press enter..."
+              value={keywordInput}
+              onChange={(e) => setKeywordInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={addKeyword}
+            disabled={!keywordInput.trim()}
+            className="px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+
+          <input
+            type="number"
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            className="w-24 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+            placeholder="Limit"
+            min={1}
+            max={100}
+          />
+          <button
+            onClick={handleSearch}
+            disabled={loading || keywords.length === 0}
+            className="px-8 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Search All"}
+          </button>
+        </div>
+      </div>
 
       {error && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+        <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 mb-8">
           {error}
         </div>
       )}
 
-      {results && (
-        <section className="mt-8">
-          <div className="mb-6 rounded-xl border bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">Keywords processed</p>
-
-            <p className="mt-1 text-3xl font-bold">
-              {results.total_keywords}
-            </p>
+      <div className="space-y-12">
+        {Object.entries(results).map(([kw, apps]) => (
+          <div key={kw}>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Results for: "{kw}"</h2>
+            {apps.length === 0 ? (
+              <p className="text-gray-500">No results found.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {apps.map((app: any, idx: number) => (
+                  <AppCard key={app.appId || idx} app={app} />
+                ))}
+              </div>
+            )}
           </div>
-
-          <div className="space-y-6">
-            {results.results.map((result, index) => (
-              <article
-                key={`${result.keyword}-${index}`}
-                className="rounded-xl border bg-white p-6 shadow-sm"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-xl font-semibold">
-                    {result.keyword}
-                  </h2>
-
-                  <div className="flex gap-3 text-sm">
-                    <span>
-                      Discovered: {result.discovered ?? 0}
-                    </span>
-
-                    <span>
-                      Duplicates: {result.duplicates ?? 0}
-                    </span>
-
-                    <span>
-                      Skipped: {result.skipped ?? 0}
-                    </span>
-                  </div>
-                </div>
-
-                {!result.apps || result.apps.length === 0 ? (
-                  <p className="mt-5 text-sm text-gray-500">
-                    No apps returned for this keyword.
-                  </p>
-                ) : (
-                  <div className="mt-5 grid gap-4 md:grid-cols-2">
-                    {result.apps.map((app, appIndex) => (
-                      <div
-                        key={`${app.app_id ?? app.title ?? "app"}-${appIndex}`}
-                        className="rounded-lg border p-4"
-                      >
-                        <h3 className="font-semibold">
-                          {app.title || "Untitled app"}
-                        </h3>
-
-                        <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
-                          <span>
-                            ⭐ {app.score ?? "N/A"}
-                          </span>
-
-                          <span>
-                            {app.installs ?? "Unknown installs"}
-                          </span>
-
-                          <span>
-                            Reviews scraped:{" "}
-                            {app.reviews_scraped ?? 0}
-                          </span>
-                        </div>
-
-                        {app.app_id && (
-                          <a
-                            href={`https://play.google.com/store/apps/details?id=${app.app_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-3 inline-block text-sm font-medium underline"
-                          >
-                            View on Google Play →
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-    </main>
+        ))}
+      </div>
+    </div>
   );
 }
-

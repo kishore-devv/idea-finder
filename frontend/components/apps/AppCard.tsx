@@ -1,11 +1,15 @@
 
+import Link from "next/link";
+
 type AppCardProps = {
   app: {
     appId?: string | null;
+    app_id?: string | null;
     icon?: string | null;
     title?: string | null;
     score?: number | null;
     genre?: string | null;
+    category?: string | null;
     free?: boolean | null;
     description?: string | null;
     developer?: string | null;
@@ -15,6 +19,8 @@ type AppCardProps = {
 };
 
 export default function AppCard({ app }: AppCardProps) {
+  const targetId = app.appId || app.app_id;
+
   return (
     <article className="rounded-xl border border-gray-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg">
       <div className="flex gap-4">
@@ -40,7 +46,7 @@ export default function AppCard({ app }: AppCardProps) {
 
           <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-700">
             <span>⭐ {app.score ?? "N/A"}</span>
-            <span>{app.genre || "Unknown category"}</span>
+            <span>{app.genre || app.category || "Unknown category"}</span>
             <span>{app.installs || "Unknown installs"}</span>
           </div>
         </div>
@@ -80,15 +86,13 @@ export default function AppCard({ app }: AppCardProps) {
         {app.description || "No description available."}
       </p>
 
-      {app.appId && (
-        <a
-          href={`https://play.google.com/store/apps/details?id=${app.appId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-block font-medium text-blue-600 underline transition-colors hover:text-blue-800"
+      {targetId && (
+        <Link
+          href={`/app-details/${targetId}`}
+          className="mt-4 inline-block font-medium text-indigo-600 underline transition-colors hover:text-indigo-800"
         >
-          View on Google Play →
-        </a>
+          View Reviews & Analysis →
+        </Link>
       )}
     </article>
   );

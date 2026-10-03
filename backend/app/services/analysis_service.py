@@ -17,7 +17,14 @@ class AnalysisService:
             app = db.query(App).filter(App.app_id == app_id).first()
 
             if not app:
-                return {"error": "App not found"}
+                from app.services.unique_app_processor import UniqueAppProcessor
+                processor = UniqueAppProcessor()
+                processor.process([{"app_id": app_id}])
+                
+                # Fetch again
+                app = db.query(App).filter(App.app_id == app_id).first()
+                if not app:
+                    return {"error": "App not found"}
 
             # -----------------------------
             # Get reviews
@@ -126,6 +133,43 @@ class AnalysisService:
 
         finally:
 
+            db.close()
+
+    def get_reviews(self, app_id: str, limit: int = 50, offset: int = 0, rating: int = None, search: str = None):
+        db = SessionLocal()
+        try:
+            # Check if app exists
+            app = db.query(App).filter(App.app_id == app_id).first()
+            if not app:
+                from app.services.unique_app_processor import UniqueAppProcessor
+                processor = UniqueAppProcessor()
+                processor.process([{"app_id": app_id}])
+                
+            query = db.query(Review).filter(Review.app_id == app_id)
+            
+            if rating is not None:
+                query = query.filter(Review.score == rating)
+                
+            if search:
+                query = query.filter(Review.text.ilike(f"%{search}%"))
+                
+            total = query.count()
+            reviews = query.offset(offset).limit(limit).all()
+            return {
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "reviews": [
+                    {
+                        "review_id": r.review_id,
+                        "text": r.text,
+                        "score": r.score,
+                        "thumbs_up": getattr(r, 'thumbs_up', 0),
+                        "date": getattr(r, 'date', None)
+                    } for r in reviews
+                ]
+            }
+        finally:
             db.close()
 
     # =====================================================

@@ -26,15 +26,69 @@ export async function discoverIntelligent(payload: {
 }) {
   const response = await fetch(`${API_URL}/discover/intelligent`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  return response.json();
+}
 
+export async function discoverBatch(payload: { keywords: string[]; limit: number }) {
+  const response = await fetch(`${API_URL}/discover/batch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  return response.json();
+}
+
+export async function discoverHiddenGems(min_installs: number = 10000, max_installs: number = 1000000) {
+  const response = await fetch(`${API_URL}/discover/hidden-gems?min_installs=${min_installs}&max_installs=${max_installs}`);
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getMarketPainPoints() {
+  const response = await fetch(`${API_URL}/market/pain-points`);
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  return response.json();
+}
+
+export async function exploreCategory(params: Record<string, any>) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      query.append(key, String(value));
+    }
+  }
+  const response = await fetch(`${API_URL}/category/apps?${query.toString()}`);
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  return response.json();
+}
+
+export async function analyzeApp(appId: string) {
+  const response = await fetch(`${API_URL}/analysis/${appId}`);
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getAppReviews(
+  appId: string,
+  limit: number = 50,
+  offset: number = 0,
+  rating?: number | null,
+  search?: string
+) {
+  const query = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset)
+  });
+  if (rating) query.append("rating", String(rating));
+  if (search) query.append("search", search);
+
+  const response = await fetch(`${API_URL}/analysis/${appId}/reviews?${query.toString()}`);
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
   return response.json();
 }
