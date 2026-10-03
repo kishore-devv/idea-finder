@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { discoverIntelligent } from "@/lib/api";
 
+import AppCard from "@/components/apps/AppCard";
+
 type AppResult = {
   appId?: string | null;
   icon?: string | null;
@@ -144,27 +146,27 @@ export default function IntelligentDiscoveryPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 py-10 bg-gray-50 min-h-screen">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Intelligent Discovery</h1>
-        <p className="mt-2 text-gray-500">
+        <h1 className="text-4xl font-bold text-gray-900">Intelligent Discovery</h1>
+        <p className="mt-2 text-gray-600 text-lg">
           Discover relevant Google Play apps using search and data filters.
         </p>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-8 rounded-xl border bg-white p-6 shadow-sm"
+        className="space-y-8 rounded-2xl border border-gray-200 bg-white p-8 shadow-lg"
       >
         <section>
-          <h2 className="mb-4 text-xl font-semibold">Search</h2>
+          <h2 className="mb-4 text-2xl font-semibold text-gray-800">Search</h2>
 
           <div className="grid gap-4 md:grid-cols-[1fr_140px_auto]">
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Example: travel buddy"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
 
             <input
@@ -173,7 +175,7 @@ export default function IntelligentDiscoveryPage() {
               max={100}
               value={limit}
               onChange={(e) => setLimit(Number(e.target.value))}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
 
             <button
@@ -187,153 +189,233 @@ export default function IntelligentDiscoveryPage() {
         </section>
 
         <section>
-          <h2 className="mb-4 text-xl font-semibold">Filters</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-800">Filters</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Narrow down the apps returned by discovery.
+              </p>
+            </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <input
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Category"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
-
-            <input
-              value={developer}
-              onChange={(e) => setDeveloper(e.target.value)}
-              placeholder="Developer"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
-
-            <select
-              value={installBucket}
-              onChange={(e) => setInstallBucket(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            <button
+              type="button"
+              onClick={() => {
+                setCategory("");
+                setDeveloper("");
+                setInstallBucket("");
+                setMinRating("");
+                setMaxRating("");
+                setMinRatings("");
+                setMaxRatings("");
+                setMinReviews("");
+                setMaxReviews("");
+                setMinInstalls("");
+                setMaxInstalls("");
+                setFree("");
+                setContainsAds("");
+                setOffersIap("");
+                setRecentlyUpdatedDays("");
+                setOldNotUpdatedDays("");
+              }}
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <option value="">Install bucket</option>
-              {installBuckets.map((bucket) => (
-                <option key={bucket} value={bucket}>
-                  {bucket}
-                </option>
-              ))}
-            </select>
+              Clear Filters
+            </button>
+          </div>
 
-            <input
-              type="number"
-              step="0.1"
-              value={minRating}
-              onChange={(e) => setMinRating(e.target.value)}
-              placeholder="Minimum rating"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Basic filters */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+              <h3 className="mb-4 font-semibold text-gray-800">Basic</h3>
 
-            <input
-              type="number"
-              step="0.1"
-              value={maxRating}
-              onChange={(e) => setMaxRating(e.target.value)}
-              placeholder="Maximum rating"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+              <div className="space-y-3">
+                <input
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Category"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
 
-            <input
-              type="number"
-              value={minRatings}
-              onChange={(e) => setMinRatings(e.target.value)}
-              placeholder="Minimum ratings"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+                <input
+                  value={developer}
+                  onChange={(e) => setDeveloper(e.target.value)}
+                  placeholder="Developer"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
 
-            <input
-              type="number"
-              value={maxRatings}
-              onChange={(e) => setMaxRatings(e.target.value)}
-              placeholder="Maximum ratings"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+                <select
+                  value={installBucket}
+                  onChange={(e) => setInstallBucket(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">Install bucket: Any</option>
 
-            <input
-              type="number"
-              value={minReviews}
-              onChange={(e) => setMinReviews(e.target.value)}
-              placeholder="Minimum reviews"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+                  {installBuckets.map((bucket) => (
+                    <option key={bucket} value={bucket}>
+                      {bucket}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-            <input
-              type="number"
-              value={maxReviews}
-              onChange={(e) => setMaxReviews(e.target.value)}
-              placeholder="Maximum reviews"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+            {/* Ratings */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+              <h3 className="mb-4 font-semibold text-gray-800">Ratings & Reviews</h3>
 
-            <input
-              type="number"
-              value={minInstalls}
-              onChange={(e) => setMinInstalls(e.target.value)}
-              placeholder="Minimum installs"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+              <div className="grid gap-3">
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={minRating}
+                  onChange={(e) => setMinRating(e.target.value)}
+                  placeholder="Minimum rating"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
 
-            <input
-              type="number"
-              value={maxInstalls}
-              onChange={(e) => setMaxInstalls(e.target.value)}
-              placeholder="Maximum installs"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={maxRating}
+                  onChange={(e) => setMaxRating(e.target.value)}
+                  placeholder="Maximum rating"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
 
-            <select
-              value={free}
-              onChange={(e) => setFree(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="">Free / Paid: Any</option>
-              <option value="yes">Free</option>
-              <option value="no">Paid</option>
-            </select>
+                <input
+                  type="number"
+                  min="0"
+                  value={minRatings}
+                  onChange={(e) => setMinRatings(e.target.value)}
+                  placeholder="Minimum ratings count"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
 
-            <select
-              value={containsAds}
-              onChange={(e) => setContainsAds(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="">Ads: Any</option>
-              <option value="yes">Has ads</option>
-              <option value="no">No ads</option>
-            </select>
+                <input
+                  type="number"
+                  min="0"
+                  value={maxRatings}
+                  onChange={(e) => setMaxRatings(e.target.value)}
+                  placeholder="Maximum ratings count"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
 
-            <select
-              value={offersIap}
-              onChange={(e) => setOffersIap(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="">IAP: Any</option>
-              <option value="yes">Has IAP</option>
-              <option value="no">No IAP</option>
-            </select>
+                <input
+                  type="number"
+                  min="0"
+                  value={minReviews}
+                  onChange={(e) => setMinReviews(e.target.value)}
+                  placeholder="Minimum reviews count"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
 
-            <input
-              type="number"
-              value={recentlyUpdatedDays}
-              onChange={(e) => setRecentlyUpdatedDays(e.target.value)}
-              placeholder="Updated within days"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+                <input
+                  type="number"
+                  min="0"
+                  value={maxReviews}
+                  onChange={(e) => setMaxReviews(e.target.value)}
+                  placeholder="Maximum reviews count"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+            </div>
 
-            <input
-              type="number"
-              value={oldNotUpdatedDays}
-              onChange={(e) => setOldNotUpdatedDays(e.target.value)}
-              placeholder="Not updated for days"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+            {/* Business / monetization */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+              <h3 className="mb-4 font-semibold text-gray-800">Business & Monetization</h3>
+
+              <div className="space-y-3">
+                <select
+                  value={free}
+                  onChange={(e) => setFree(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">Free / Paid: Any</option>
+                  <option value="yes">Free</option>
+                  <option value="no">Paid</option>
+                </select>
+
+                <select
+                  value={containsAds}
+                  onChange={(e) => setContainsAds(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">Ads: Any</option>
+                  <option value="yes">Has ads</option>
+                  <option value="no">No ads</option>
+                </select>
+
+                <select
+                  value={offersIap}
+                  onChange={(e) => setOffersIap(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">In-App Purchases: Any</option>
+                  <option value="yes">Has IAP</option>
+                  <option value="no">No IAP</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Install range */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+              <h3 className="mb-4 font-semibold text-gray-800">Install Range</h3>
+
+              <div className="grid gap-3">
+                <input
+                  type="number"
+                  min="0"
+                  value={minInstalls}
+                  onChange={(e) => setMinInstalls(e.target.value)}
+                  placeholder="Minimum installs"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+
+                <input
+                  type="number"
+                  min="0"
+                  value={maxInstalls}
+                  onChange={(e) => setMaxInstalls(e.target.value)}
+                  placeholder="Maximum installs"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+            </div>
+
+            {/* Update filters */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+              <h3 className="mb-4 font-semibold text-gray-800">Update Activity</h3>
+
+              <div className="space-y-3">
+                <input
+                  type="number"
+                  min="0"
+                  value={recentlyUpdatedDays}
+                  onChange={(e) => setRecentlyUpdatedDays(e.target.value)}
+                  placeholder="Updated within X days"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+
+                <input
+                  type="number"
+                  min="0"
+                  value={oldNotUpdatedDays}
+                  onChange={(e) => setOldNotUpdatedDays(e.target.value)}
+                  placeholder="Not updated for X days"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+            </div>
           </div>
         </section>
       </form>
 
       {error && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+        <div className="mt-6 rounded-lg border border-red-300 bg-red-50 p-4 text-red-800">
           {error}
         </div>
       )}
@@ -341,84 +423,41 @@ export default function IntelligentDiscoveryPage() {
       {results && (
         <section className="mt-8">
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border bg-white p-5 shadow-sm">
-              <p className="text-sm text-gray-500">Candidates</p>
-              <p className="mt-2 text-3xl font-bold">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+              <p className="text-sm text-gray-600">Candidates</p>
+              <p className="mt-2 text-4xl font-bold text-gray-900">
                 {results.total_candidates_found}
               </p>
             </div>
 
-            <div className="rounded-xl border bg-white p-5 shadow-sm">
-              <p className="text-sm text-gray-500">Filtered</p>
-              <p className="mt-2 text-3xl font-bold">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+              <p className="text-sm text-gray-600">Filtered</p>
+              <p className="mt-2 text-4xl font-bold text-gray-900">
                 {results.filtered_apps_found}
               </p>
             </div>
 
-            <div className="rounded-xl border bg-white p-5 shadow-sm">
-              <p className="text-sm text-gray-500">Relevant</p>
-              <p className="mt-2 text-3xl font-bold">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+              <p className="text-sm text-gray-600">Relevant</p>
+              <p className="mt-2 text-4xl font-bold text-gray-900">
                 {results.relevant_apps_found}
               </p>
             </div>
           </div>
 
           {results.relevant_apps.length === 0 ? (
-            <div className="mt-8 rounded-xl border bg-white p-8 text-center">
+            <div className="mt-8 rounded-xl border border-gray-200 bg-white p-12 text-center text-gray-600 shadow-md">
               No relevant apps found.
             </div>
           ) : (
-            <div className="mt-8 grid gap-5 md:grid-cols-2">
-              {results.relevant_apps.map((app, index) => (
-                <article
-                  key={`${app.appId ?? app.title ?? "app"}-${index}`}
-                  className="rounded-xl border bg-white p-5 shadow-sm"
-                >
-                  <div className="flex gap-4">
-                    {app.icon ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={app.icon}
-                        alt={app.title ?? "App icon"}
-                        className="h-16 w-16 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div className="h-16 w-16 rounded-xl border" />
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-lg font-semibold">
-                        {app.title || "Untitled app"}
-                      </h3>
-
-                      <p className="text-sm text-gray-500">
-                        {app.developer || "Unknown developer"}
-                      </p>
-
-                      <div className="mt-2 flex flex-wrap gap-2 text-sm">
-                        <span>⭐ {app.score ?? "N/A"}</span>
-                        <span>{app.genre || "Unknown category"}</span>
-                        <span>{app.installs || "Unknown installs"}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                    <span className="rounded-full border px-3 py-1">
-                      {app.free ? "Free" : "Paid"}
-                    </span>
-
-                    <span className="rounded-full border px-3 py-1">
-                      Relevance: {app.relevance_score ?? "N/A"}
-                    </span>
-                  </div>
-
-                  <p className="mt-4 line-clamp-3 text-sm text-gray-600">
-                    {app.description || "No description available."}
-                  </p>
-                </article>
-              ))}
-            </div>
+            <div className="mt-8 grid gap-6 md:grid-cols-2">
+  {results.relevant_apps.map((app, index) => (
+    <AppCard
+      key={`${app.appId ?? app.title ?? "app"}-${index}`}
+      app={app}
+    />
+  ))}
+</div>
           )}
         </section>
       )}
